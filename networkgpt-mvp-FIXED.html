@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetworkGPT - Professional Network Memory</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-left: 10px;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-logout {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 20px;
+            font-size: 14px;
+        }
+        
+        .btn-logout:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .search-bar {
+            margin-bottom: 30px;
+        }
+        
+        .search-bar input {
+            font-size: 16px;
+            padding: 15px;
+        }
+        
+        .connection-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+        
+        .connection-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateX(5px);
+        }
+        
+        .connection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        
+        .connection-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .connection-company {
+            color: #667eea;
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .connection-notes {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .connection-date {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+        
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #374151;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            flex: 1;
+            margin: 0 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+        
+        .toggle-form {
+            text-align: center;
+            margin-top: 20px;
+            color: #667eea;
+            cursor: pointer;
+        }
+        
+        .toggle-form:hover {
+            text-decoration: underline;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc2626;
+        }
+        
+        .success {
+            background: #d1fae5;
+            color: #059669;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #059669;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .user-email {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+            }
+            
+            .stat-card {
+                margin: 10px 0;
+            }
+            
+            .connection-header {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-container" style="display: none;">
+        <div class="card">
+            <h1 style="text-align: center; color: #667eea; margin-bottom: 30px;">NetworkGPT</h1>
+            <p style="text-align: center; color: #6b7280; margin-bottom: 30px;">Your Professional Network Memory</p>
+            
+            <div id="authError" class="error" style="display: none;"></div>
+            
+            <form id="authForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="your@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="Enter password (min 6 characters)">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="authButton">Sign Up</button>
+            </form>
+            
+            <div class="toggle-form" id="toggleAuth">
+                Already have an account? <strong>Log In</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="appScreen" style="display: none;">
+        <div class="container">
+            <!-- Header -->
+            <div class="header">
+                <div class="top-bar">
+                    <div>
+                        <h1>NetworkGPT</h1>
+                        <p class="user-email" id="userEmail"></p>
+                    </div>
+                    <button class="btn btn-logout" onclick="logout()">Logout</button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalConnections">0</div>
+                    <div class="stat-label">Connections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="thisWeek">0</div>
+                    <div class="stat-label">This Week</div>
+                </div>
+            </div>
+
+            <!-- Add Connection Form -->
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #1f2937;">Add New Connection</h2>
+                
+                <div id="addSuccess" class="success" style="display: none;">Connection added successfully!</div>
+                
+                <form id="addConnectionForm">
+                    <div class="form-group">
+                        <label for="name">Name *</label>
+                        <input type="text" id="name" required placeholder="John Smith">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="company">Company *</label>
+                        <input type="text" id="company" required placeholder="Tesla">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" placeholder="What did you discuss? Follow-up needed?"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Save Connection</button>
+                </form>
+            </div>
+
+            <!-- Search & List -->
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #1f2937;">Your Connections</h2>
+                
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="🔍 Search by name or company...">
+                </div>
+                
+                <div id="connectionsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading">
+        <h2>Loading NetworkGPT...</h2>
+    </div>
+
+    <script>
+        // Firebase Configuration - CORRECTED
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcuIEJsHSBDeWe8haNg-5uLspRvj7tzc",
+            authDomain: "networkgpt-e3660.firebaseapp.com",
+            projectId: "networkgpt-e3660",
+            storageBucket: "networkgpt-e3660.firebasestorage.app",
+            messagingSenderId: "301728584715",
+            appId: "1:301728584715:web:a722bb1226a46fa964e30e"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let connections = [];
+        let isSignUp = true;
+
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            document.getElementById('loadingScreen').style.display = 'none';
+            
+            if (user) {
+                currentUser = user;
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('appScreen').style.display = 'block';
+                document.getElementById('userEmail').textContent = user.email;
+                loadConnections();
+            } else {
+                currentUser = null;
+                document.getElementById('authScreen').style.display = 'block';
+                document.getElementById('appScreen').style.display = 'none';
+            }
+        });
+
+        // Toggle between Sign Up and Log In
+        document.getElementById('toggleAuth').addEventListener('click', () => {
+            isSignUp = !isSignUp;
+            const button = document.getElementById('authButton');
+            const toggle = document.getElementById('toggleAuth');
+            
+            if (isSignUp) {
+                button.textContent = 'Sign Up';
+                toggle.innerHTML = 'Already have an account? <strong>Log In</strong>';
+            } else {
+                button.textContent = 'Log In';
+                toggle.innerHTML = "Don't have an account? <strong>Sign Up</strong>";
+            }
+        });
+
+        // Handle Auth Form
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('authError');
+            
+            errorDiv.style.display = 'none';
+            
+            try {
+                if (isSignUp) {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                } else {
+                    await auth.signInWithEmailAndPassword(email, password);
+                }
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        // Logout
+        function logout() {
+            auth.signOut();
+        }
+
+        // Add Connection
+        document.getElementById('addConnectionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const company = document.getElementById('company').value;
+            const notes = document.getElementById('notes').value;
+            
+            try {
+                await db.collection('connections').add({
+                    userId: currentUser.uid,
+                    name: name,
+                    company: company,
+                    notes: notes,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Show success message
+                document.getElementById('addSuccess').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('addSuccess').style.display = 'none';
+                }, 3000);
+                
+                // Clear form
+                document.getElementById('addConnectionForm').reset();
+                
+                // Reload connections
+                loadConnections();
+            } catch (error) {
+                alert('Error adding connection: ' + error.message);
+            }
+        });
+
+        // Load Connections
+        async function loadConnections() {
+            try {
+                const snapshot = await db.collection('connections')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                connections = [];
+                snapshot.forEach(doc => {
+                    connections.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                displayConnections(connections);
+                updateStats();
+            } catch (error) {
+                console.error('Error loading connections:', error);
+            }
+        }
+
+        // Display Connections
+        function displayConnections(connectionsToShow) {
+            const container = document.getElementById('connectionsList');
+            
+            if (connectionsToShow.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No connections yet</h3>
+                        <p>Add your first connection above to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = connectionsToShow.map(conn => `
+                <div class="connection-card">
+                    <div class="connection-header">
+                        <div>
+                            <div class="connection-name">${escapeHtml(conn.name)}</div>
+                            <div class="connection-company">${escapeHtml(conn.company)}</div>
+                        </div>
+                        <button class="btn btn-danger" onclick="deleteConnection('${conn.id}')">Delete</button>
+                    </div>
+                    ${conn.notes ? `<div class="connection-notes">${escapeHtml(conn.notes)}</div>` : ''}
+                    <div class="connection-date">Added ${formatDate(conn.createdAt)}</div>
+                </div>
+            `).join('');
+        }
+
+        // Search
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            
+            if (!query) {
+                displayConnections(connections);
+                return;
+            }
+            
+            const filtered = connections.filter(conn => 
+                conn.name.toLowerCase().includes(query) ||
+                conn.company.toLowerCase().includes(query) ||
+                (conn.notes && conn.notes.toLowerCase().includes(query))
+            );
+            
+            displayConnections(filtered);
+        });
+
+        // Delete Connection
+        async function deleteConnection(id) {
+            if (!confirm('Are you sure you want to delete this connection?')) return;
+            
+            try {
+                await db.collection('connections').doc(id).delete();
+                loadConnections();
+            } catch (error) {
+                alert('Error deleting connection: ' + error.message);
+            }
+        }
+
+        // Update Stats
+        function updateStats() {
+            document.getElementById('totalConnections').textContent = connections.length;
+            
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            
+            const thisWeek = connections.filter(conn => {
+                if (!conn.createdAt) return false;
+                const date = conn.createdAt.toDate();
+                return date > oneWeekAgo;
+            }).length;
+            
+            document.getElementById('thisWeek').textContent = thisWeek;
+        }
+
+        // Helper Functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'Just now';
+            const date = timestamp.toDate();
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) return 'Today';
+            if (days === 1) return 'Yesterday';
+            if (days < 7) return `${days} days ago`;
+            
+            return date.toLocaleDateString();
+        }
+    </script>
+</body>
+</html>
